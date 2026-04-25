@@ -9,13 +9,21 @@ require_auth();
 $user  = current_user();
 $today = date('Y-m-d');
 
+// Récupérer et vider le message flash (redirect depuis daily.php)
+// Retrieve and clear flash message (redirect from daily.php)
+$flash = '';
+if (!empty($_SESSION['flash'])) {
+    $flash = $_SESSION['flash'];
+    unset($_SESSION['flash']);
+}
+
 // Calculer le BMR du jour (poids du jour si saisi, sinon poids initial)
 // Compute today's BMR (today's weight if entered, otherwise initial weight)
 $stmt = get_db()->prepare('SELECT poids_jour FROM daily_logs WHERE user_id = ? AND log_date = ?');
 $stmt->execute([$user['id'], $today]);
-$log     = $stmt->fetch();
-$poids   = $log['poids_jour'] ?? $user['poids_initial'];
-$bmr     = calculate_bmr((float)$poids, (int)$user['taille_cm'], $user['date_naissance'], $user['sexe']);
+$log   = $stmt->fetch();
+$poids = $log['poids_jour'] ?? $user['poids_initial'];
+$bmr   = calculate_bmr((float)$poids, (int)$user['taille_cm'], $user['date_naissance'], $user['sexe']);
 
 // Total kcal ingérées aujourd'hui (repas validés)
 // Total kcal ingested today (validated meals)
@@ -25,8 +33,8 @@ $stmt = get_db()->prepare('
     WHERE user_id = ? AND log_date = ? AND kcal_final IS NOT NULL
 ');
 $stmt->execute([$user['id'], $today]);
-$ingere  = (int)$stmt->fetchColumn();
-$solde   = $bmr - $ingere;
+$ingere     = (int)$stmt->fetchColumn();
+$solde      = $bmr - $ingere;
 $solde_class = $solde >= 0 ? 'positive' : 'danger';
 
 // Historique du jour : repas + tensions
@@ -55,6 +63,10 @@ $history = $stmt->fetchAll();
 <body>
 <main class="container">
 
+    <?php if ($flash): ?>
+        <div class="card positive" style="margin-top: 1rem;">✅ <?= htmlspecialchars($flash) ?></div>
+    <?php endif; ?>
+
     <!-- Solde calorique du jour -->
     <!-- Daily calorie balance -->
     <div class="budget-bar" style="margin-top: 1rem;">
@@ -72,11 +84,11 @@ $history = $stmt->fetchAll();
         </div>
     </div>
 
-    <!-- Formulaire de saisie -->
-    <!-- Entry form — to be implemented in Phase 1 -->
+    <!-- Formulaire de saisie — Phase 1 -->
+    <!-- Entry form — Phase 1 -->
     <div class="card">
         <p style="color: var(--color-text-muted); text-align:center;">
-            Formulaire de saisie — Phase 1
+            Saisie des repas — Phase 1
         </p>
     </div>
 

@@ -11,10 +11,15 @@ $success = '';
 $error   = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $taille_cm      = (int)($_POST['taille_cm']      ?? 0);
     $poids_objectif = $_POST['poids_objectif'] !== '' ? (float)$_POST['poids_objectif'] : null;
 
-    if ($taille_cm) {
+    // La taille n'est mise à jour que si la case de déblocage est cochée
+    // Height is only updated when the unlock checkbox is checked
+    $taille_cm = isset($_POST['modifier_taille']) && $_POST['taille_cm'] !== ''
+        ? (int)$_POST['taille_cm']
+        : (int)$user['taille_cm'];
+
+    if ($taille_cm >= 100 && $taille_cm <= 250) {
         $stmt = get_db()->prepare('
             UPDATE users SET taille_cm = ?, poids_objectif = ?, updated_at = NOW()
             WHERE id = ?
@@ -44,7 +49,10 @@ $bmr = calculate_bmr(
 </head>
 <body>
 <main class="container">
-    <h1 style="margin: 1rem 0;">Mon profil</h1>
+    <div class="page-header">
+    <img src="/assets/img/logo_eona.svg" alt="EonA" class="app-logo">
+    <h1>Mon profil</h1>
+</div>
 
     <?php if ($success): ?>
         <div class="card positive"><?= htmlspecialchars($success) ?></div>
@@ -57,16 +65,30 @@ $bmr = calculate_bmr(
     </div>
 
     <form method="POST" class="card">
+
+        <!-- Taille — champ verrouillé par défaut, débloqué par la case à cocher -->
+        <!-- Height — locked by default, unlocked via checkbox -->
         <div class="form-group">
-            <label>Taille (cm)</label>
-            <input type="number" name="taille_cm" min="100" max="250"
-                   value="<?= htmlspecialchars($user['taille_cm']) ?>" required>
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">
+                <label style="margin:0;">Taille (cm)</label>
+                <label style="font-size:0.8rem; color:var(--color-text-muted); display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+                    <input type="checkbox" id="modifier_taille" name="modifier_taille" onchange="toggleTaille(this)">
+                    Modifier
+                </label>
+            </div>
+            <input type="number" name="taille_cm" id="champ_taille"
+                   min="100" max="250"
+                   value="<?= htmlspecialchars($user['taille_cm']) ?>"
+                   disabled
+                   style="opacity:0.45; cursor:not-allowed;">
         </div>
+
         <div class="form-group">
             <label>Objectif de poids (kg)</label>
             <input type="number" name="poids_objectif" step="0.1" min="30" max="300"
                    value="<?= htmlspecialchars($user['poids_objectif'] ?? '') ?>">
         </div>
+
         <button type="submit" class="btn btn-primary">Mettre à jour</button>
     </form>
 
@@ -83,5 +105,15 @@ $bmr = calculate_bmr(
 </nav>
 
 <script src="/assets/js/main.js"></script>
+<script>
+// Débloquer ou reverrouiller le champ taille selon la case cochée
+// Unlock or re-lock the height field based on checkbox state
+function toggleTaille(checkbox) {
+    const champ = document.getElementById('champ_taille');
+    champ.disabled = !checkbox.checked;
+    champ.style.opacity = checkbox.checked ? '1' : '0.45';
+    champ.style.cursor  = checkbox.checked ? '' : 'not-allowed';
+}
+</script>
 </body>
 </html>

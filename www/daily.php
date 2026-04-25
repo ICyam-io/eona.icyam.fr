@@ -6,33 +6,33 @@ require_once __DIR__ . '/includes/auth.php';
 require_once __DIR__ . '/includes/helpers.php';
 
 require_auth();
-$user = current_user();
-$today = date('Y-m-d');
+$user      = current_user();
+$yesterday = date('Y-m-d', strtotime('yesterday'));
+$today     = date('Y-m-d');
 
-// Charger l'entrée du jour si elle existe déjà
-// Load today's entry if it already exists
+// Charger l'entrée d'hier si elle existe déjà
+// Load yesterday's entry if it already exists
 $stmt = get_db()->prepare('SELECT * FROM daily_logs WHERE user_id = ? AND log_date = ?');
-$stmt->execute([$user['id'], $today]);
+$stmt->execute([$user['id'], $yesterday]);
 $log = $stmt->fetch();
 
-$error   = '';
-$success = '';
+$error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $type_journee    = $_POST['type_journee']  ?? '';
-    $score_source    = $_POST['score_source']  ?? 'manuel';
-    $score_manuel    = $_POST['score_manuel']  !== '' ? (int)$_POST['score_manuel']  : null;
-    $eveil           = $_POST['eveil']         !== '' ? (int)$_POST['eveil']         : null;
-    $paradoxal       = $_POST['paradoxal']     !== '' ? (int)$_POST['paradoxal']     : null;
-    $lent            = $_POST['lent']          !== '' ? (int)$_POST['lent']          : null;
-    $profond         = $_POST['profond']       !== '' ? (int)$_POST['profond']       : null;
-    $poids_jour      = $_POST['poids_jour']    !== '' ? (float)$_POST['poids_jour']  : null;
-    $cal_exercice    = $_POST['cal_exercice']  !== '' ? (int)$_POST['cal_exercice']  : null;
-    $nb_pas          = $_POST['nb_pas']        !== '' ? (int)$_POST['nb_pas']        : null;
+    $type_journee = $_POST['type_journee']  ?? '';
+    $score_source = $_POST['score_source']  ?? 'manuel';
+    $score_manuel = $_POST['score_manuel']  !== '' ? (int)$_POST['score_manuel']  : null;
+    $eveil        = $_POST['eveil']         !== '' ? (int)$_POST['eveil']         : null;
+    $paradoxal    = $_POST['paradoxal']     !== '' ? (int)$_POST['paradoxal']     : null;
+    $lent         = $_POST['lent']          !== '' ? (int)$_POST['lent']          : null;
+    $profond      = $_POST['profond']       !== '' ? (int)$_POST['profond']       : null;
+    $poids_jour   = $_POST['poids_jour']    !== '' ? (float)$_POST['poids_jour']  : null;
+    $cal_exercice = $_POST['cal_exercice']  !== '' ? (int)$_POST['cal_exercice']  : null;
+    $nb_pas       = $_POST['nb_pas']        !== '' ? (int)$_POST['nb_pas']        : null;
 
     // Calculer le score si les 4 durées sont fournies
     // Compute score if all 4 durations are provided
-    $score_final  = null;
+    $score_final        = null;
     $score_source_final = null;
 
     if ($score_source === 'calcule' && $eveil !== null && $paradoxal !== null && $lent !== null && $profond !== null) {
@@ -45,8 +45,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($type_journee) {
         try {
-            // Insérer ou mettre à jour l'entrée du jour (UNIQUE user_id + log_date)
-            // Insert or update today's entry (UNIQUE user_id + log_date)
+            // Insérer ou mettre à jour l'entrée d'hier (UNIQUE user_id + log_date)
+            // Insert or update yesterday's entry (UNIQUE user_id + log_date)
             $stmt = get_db()->prepare('
                 INSERT INTO daily_logs
                     (user_id, log_date, type_journee, eveil_min, sommeil_paradoxal_min,
@@ -67,22 +67,42 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     updated_at             = NOW()
             ');
             $stmt->execute([
-                $user['id'], $today, $type_journee,
+                $user['id'], $yesterday, $type_journee,
                 $eveil, $paradoxal, $lent, $profond,
                 $score_final, $score_source_final,
                 $poids_jour, $cal_exercice, $nb_pas,
             ]);
-            $success = 'Données enregistrées.';
-            // Recharger l'entrée du jour
-            // Reload today's entry
-            $stmt = get_db()->prepare('SELECT * FROM daily_logs WHERE user_id = ? AND log_date = ?');
-            $stmt->execute([$user['id'], $today]);
-            $log = $stmt->fetch();
+            // Message flash + redirection vers le journal
+            // Flash message + redirect to journal
+            $_SESSION['flash'] = 'Données enregistrées.';
+            header('Location: /journal.php');
+            exit;
         } catch (PDOException $e) {
             $error = 'Erreur lors de l\'enregistrement.';
         }
     }
 }
+
+// Retourne le nom du jour en français (Lundi, Mardi…)
+// Returns the French day name (Lundi, Mardi…)
+function jour_fr(string $ymd): string
+{
+    $jours = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+    return $jours[(int)date('w', strtotime($ymd))];
+}
+
+// Retourne "vendredi 24 avril" depuis une date Y-m-d
+// Returns "vendredi 24 avril" from a Y-m-d date
+function date_court(string $ymd): string
+{
+    $mois = ['', 'janvier', 'février', 'mars', 'avril', 'mai', 'juin',
+              'juillet', 'août', 'septembre', 'octobre', 'novembre', 'décembre'];
+    $ts = strtotime($ymd);
+    return strtolower(jour_fr($ymd)) . ' ' . date('j', $ts) . ' ' . $mois[(int)date('n', $ts)];
+}
+
+$label_hier = date_court($yesterday);  // ex. "vendredi 24 avril"
+$label_auj  = date_court($today);      // ex. "samedi 25 avril"
 ?>
 <!DOCTYPE html>
 <html lang="fr">
@@ -96,38 +116,65 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <main class="container">
-    <h1 style="margin: 1rem 0;">Ma journée</h1>
-    <p style="color: var(--color-text-muted); margin-bottom: 1rem;"><?= date('l d F Y') ?></p>
+    <div class="page-header">
+    <img src="/assets/img/logo_eona.svg" alt="EonA" class="app-logo">
+    <h1>Ma journée</h1>
+</div>
 
-    <?php if ($success): ?>
-        <div class="card positive"><?= htmlspecialchars($success) ?></div>
-    <?php endif; ?>
     <?php if ($error): ?>
         <div class="card danger"><?= htmlspecialchars($error) ?></div>
     <?php endif; ?>
 
     <form method="POST">
-        <!-- Type de journée -->
-        <div class="form-group">
-            <label>Type de journée *</label>
-            <select name="type_journee" required>
-                <option value="">— Choisir —</option>
-                <?php
-                $types = ['travail_sedentaire' => 'Travail sédentaire', 'travail_actif' => 'Travail actif',
-                          'repos' => 'Repos', 'sport' => 'Sport / entraînement', 'fete' => 'Fête / événement',
-                          'vacances' => 'Vacances', 'maladie' => 'Maladie / convalescence',
-                          'stress' => 'Stress intense', 'voyage' => 'Voyage'];
-                foreach ($types as $val => $label):
-                    $selected = ($log['type_journee'] ?? '') === $val ? 'selected' : '';
-                ?>
-                    <option value="<?= $val ?>" <?= $selected ?>><?= $label ?></option>
-                <?php endforeach; ?>
-            </select>
+
+        <!-- ── Section 1 : Journée de la veille ── -->
+        <!-- Section 1: Yesterday's day data -->
+        <div class="card" style="margin-bottom: 1rem;">
+            <p class="section-label">📅 Journée du <?= $label_hier ?></p>
+
+            <div class="form-group">
+                <label>Type de journée *</label>
+                <select name="type_journee" required>
+                    <option value="">— Choisir —</option>
+                    <?php
+                    $types = [
+                        'travail_sedentaire' => 'Travail sédentaire',
+                        'travail_actif'      => 'Travail actif',
+                        'repos'              => 'Repos',
+                        'sport'              => 'Sport / entraînement',
+                        'fete'               => 'Fête / événement',
+                        'vacances'           => 'Vacances',
+                        'maladie'            => 'Maladie / convalescence',
+                        'stress'             => 'Stress intense',
+                        'voyage'             => 'Voyage',
+                    ];
+                    foreach ($types as $val => $label):
+                        $selected = ($log['type_journee'] ?? '') === $val ? 'selected' : '';
+                    ?>
+                        <option value="<?= $val ?>" <?= $selected ?>><?= $label ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Calories d'exercice (bracelet / montre)</label>
+                <input type="number" name="cal_exercice" min="0"
+                       placeholder="kcal actives mesurées"
+                       value="<?= htmlspecialchars($log['calories_exercice'] ?? '') ?>">
+                <small style="color:var(--color-text-muted);">Dépenses actives uniquement.</small>
+            </div>
+
+            <div class="form-group">
+                <label>Nombre de pas</label>
+                <input type="number" name="nb_pas" min="0"
+                       value="<?= htmlspecialchars($log['nb_pas'] ?? '') ?>">
+            </div>
         </div>
 
-        <!-- Score sommeil -->
-        <div class="card">
-            <p style="font-weight:600; margin-bottom: 1rem;">Sommeil de la nuit</p>
+        <!-- ── Section 2 : Nuit de la veille au jour actuel ── -->
+        <!-- Section 2: Night from yesterday to today -->
+        <div class="card" style="margin-bottom: 1rem;">
+            <p class="section-label">🌙 Nuit du <?= $label_hier ?> au <?= $label_auj ?></p>
 
             <div class="form-group">
                 <label>Mode de saisie</label>
@@ -148,19 +195,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <div id="bloc-calcule" style="display:none;">
                 <div class="form-group">
                     <label>Temps d'éveil (min)</label>
-                    <input type="number" name="eveil" min="0" value="<?= htmlspecialchars($log['eveil_min'] ?? '') ?>">
+                    <input type="number" name="eveil" min="0"
+                           value="<?= htmlspecialchars($log['eveil_min'] ?? '') ?>">
                 </div>
                 <div class="form-group">
                     <label>Sommeil paradoxal / REM (min)</label>
-                    <input type="number" name="paradoxal" min="0" value="<?= htmlspecialchars($log['sommeil_paradoxal_min'] ?? '') ?>">
+                    <input type="number" name="paradoxal" min="0"
+                           value="<?= htmlspecialchars($log['sommeil_paradoxal_min'] ?? '') ?>">
                 </div>
                 <div class="form-group">
                     <label>Sommeil lent / léger (min)</label>
-                    <input type="number" name="lent" min="0" value="<?= htmlspecialchars($log['sommeil_lent_min'] ?? '') ?>">
+                    <input type="number" name="lent" min="0"
+                           value="<?= htmlspecialchars($log['sommeil_lent_min'] ?? '') ?>">
                 </div>
                 <div class="form-group">
                     <label>Sommeil profond (min)</label>
-                    <input type="number" name="profond" min="0" value="<?= htmlspecialchars($log['sommeil_profond_min'] ?? '') ?>">
+                    <input type="number" name="profond" min="0"
+                           value="<?= htmlspecialchars($log['sommeil_profond_min'] ?? '') ?>">
                 </div>
                 <?php if ($log && $log['score_sommeil_source'] === 'calcule'): ?>
                     <p style="color: var(--color-accent);">Score calculé : <?= $log['score_sommeil'] ?>/100</p>
@@ -168,20 +219,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
         </div>
 
-        <div class="form-group">
-            <label>Poids à jeun (kg)</label>
-            <input type="number" name="poids_jour" step="0.1" min="30" max="300"
-                   value="<?= htmlspecialchars($log['poids_jour'] ?? '') ?>">
-        </div>
-        <div class="form-group">
-            <label>Calories brûlées hier soir (exercice)</label>
-            <input type="number" name="cal_exercice" min="0"
-                   value="<?= htmlspecialchars($log['calories_exercice'] ?? '') ?>">
-        </div>
-        <div class="form-group">
-            <label>Nombre de pas (hier)</label>
-            <input type="number" name="nb_pas" min="0"
-                   value="<?= htmlspecialchars($log['nb_pas'] ?? '') ?>">
+        <!-- ── Section 3 : Matin du jour actuel ── -->
+        <!-- Section 3: This morning's data -->
+        <div class="card" style="margin-bottom: 1rem;">
+            <p class="section-label">☀️ Matin du <?= $label_auj ?></p>
+
+            <div class="form-group">
+                <label>Poids à jeun (kg)</label>
+                <input type="number" name="poids_jour" step="0.1" min="30" max="300"
+                       value="<?= htmlspecialchars($log['poids_jour'] ?? '') ?>">
+            </div>
         </div>
 
         <button type="submit" class="btn btn-primary">Enregistrer</button>
@@ -200,8 +247,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 // Basculer entre mode score direct et mode détaillé montre
 // Toggle between direct score mode and detailed watch mode
 document.getElementById('score_source').addEventListener('change', function() {
-    document.getElementById('bloc-manuel').style.display   = this.value === 'manuel'  ? '' : 'none';
-    document.getElementById('bloc-calcule').style.display  = this.value === 'calcule' ? '' : 'none';
+    document.getElementById('bloc-manuel').style.display  = this.value === 'manuel'  ? '' : 'none';
+    document.getElementById('bloc-calcule').style.display = this.value === 'calcule' ? '' : 'none';
 });
 </script>
 </body>

@@ -20,7 +20,10 @@ $user = current_user();
 </head>
 <body>
 <main class="container">
-    <h1 style="margin: 1rem 0;">Tableau de bord</h1>
+    <div class="page-header">
+    <img src="/assets/img/logo_eona.svg" alt="EonA" class="app-logo">
+    <h1>Tableau de bord</h1>
+</div>
 
     <!-- Sélecteur de période — à implémenter en Phase 1 -->
     <!-- Period selector — to be implemented in Phase 1 -->

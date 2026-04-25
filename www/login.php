@@ -47,7 +47,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <main class="container" style="padding-top: 3rem;">
-    <h1 style="text-align:center; margin-bottom: 2rem;">EonA</h1>
+    <img src="/assets/img/logo_eona.svg" alt="EonA" class="login-logo">
+    <h1 class="login-title">EonA</h1>
 
     <?php if ($error): ?>
         <div class="card" style="color: var(--color-danger); margin-bottom: 1rem;">

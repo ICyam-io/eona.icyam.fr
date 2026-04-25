@@ -49,5 +49,5 @@ function format_duration(int $minutes): string
     }
     $h   = intdiv($minutes, 60);
     $min = $minutes % 60;
-    return $min > 0 ? "{$h}h{$min:02d}min" : "{$h}h";
+    return $min > 0 ? sprintf('%dh%02dmin', $h, $min) : "{$h}h";
 }

@@ -17,15 +17,15 @@ if (!empty($_SESSION['user_id'])) {
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $prenom          = trim($_POST['prenom']          ?? '');
-    $nom             = trim($_POST['nom']             ?? '');
-    $email           = trim($_POST['email']           ?? '');
-    $password        = $_POST['password']             ?? '';
-    $date_naissance  = $_POST['date_naissance']       ?? '';
-    $sexe            = $_POST['sexe']                 ?? '';
-    $taille_cm       = (int)($_POST['taille_cm']      ?? 0);
-    $poids_initial   = (float)($_POST['poids_initial']?? 0);
-    $poids_objectif  = $_POST['poids_objectif'] !== '' ? (float)$_POST['poids_objectif'] : null;
+    $prenom         = trim($_POST['prenom']          ?? '');
+    $nom            = trim($_POST['nom']             ?? '');
+    $email          = trim($_POST['email']           ?? '');
+    $password       = $_POST['password']             ?? '';
+    $date_naissance = $_POST['date_naissance']       ?? '';
+    $sexe           = $_POST['sexe']                 ?? '';
+    $taille_cm      = (int)($_POST['taille_cm']      ?? 0);
+    $poids_initial  = (float)($_POST['poids_initial'] ?? 0);
+    $poids_objectif = $_POST['poids_objectif'] !== '' ? (float)$_POST['poids_objectif'] : null;
 
     if ($prenom && $nom && $email && $password && $date_naissance && $sexe && $taille_cm && $poids_initial) {
         $hash = password_hash($password, PASSWORD_BCRYPT);
@@ -62,7 +62,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
 <body>
 <main class="container" style="padding-top: 2rem; padding-bottom: 2rem;">
-    <h1 style="text-align:center; margin-bottom: 2rem;">Créer un compte</h1>
+    <img src="/assets/img/logo_eona.svg" alt="EonA" class="login-logo">
+    <h1 class="login-title">Créer un compte</h1>
 
     <?php if ($error): ?>
         <div class="card" style="color: var(--color-danger);"><?= htmlspecialchars($error) ?></div>
