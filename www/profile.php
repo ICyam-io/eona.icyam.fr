@@ -72,7 +72,7 @@ $bmr = calculate_bmr(
             <label style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.4rem;">
                 Taille (cm)
                 <span style="font-size:0.8rem; color:var(--color-text-muted); display:inline-flex; align-items:center; gap:0.25rem; cursor:pointer; white-space:nowrap;">
-                    <input type="checkbox" id="modifier_taille" name="modifier_taille" onchange="toggleTaille(this)">
+                    <input type="checkbox" id="modifier_taille" name="modifier_taille" onchange="toggleTaille(this)" style="margin:0; padding:0; width:1rem; height:1rem; flex-shrink:0; cursor:pointer;">
                     Modifier
                 </span>
             </label>
