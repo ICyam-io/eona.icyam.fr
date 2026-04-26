@@ -20,19 +20,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $password = trim($_POST['password'] ?? '');
 
     if ($email && $password) {
-        $stmt = get_db()->prepare('SELECT id, password_hash FROM users WHERE email = ?');
+        $stmt = get_db()->prepare('SELECT id, password_hash, statut FROM users WHERE email = ?');
         $stmt->execute([$email]);
         $user = $stmt->fetch();
 
-        // Vérifier le hash bcrypt — login si valide
-        // Verify bcrypt hash — log in if valid
+        // Vérifier le hash bcrypt
+        // Verify bcrypt hash
         if ($user && password_verify($password, $user['password_hash'])) {
-            login((int)$user['id']);
-            header('Location: /journal.php');
-            exit;
+            // Bloquer les comptes non actifs avant d'ouvrir la session
+            // Block non-active accounts before opening the session
+            if ($user['statut'] === 'pending') {
+                $error = 'Ton compte est en attente de validation. Tu recevras un accès dès confirmation.';
+            } elseif ($user['statut'] === 'refused') {
+                $error = 'Ton accès à EonA n\'a pas été accordé.';
+            } else {
+                login((int)$user['id']);
+                header('Location: /journal.php');
+                exit;
+            }
+        } else {
+            $error = 'Email ou mot de passe incorrect.';
         }
+    } else {
+        $error = 'Email ou mot de passe incorrect.';
     }
-    $error = 'Email ou mot de passe incorrect.';
 }
 ?>
 <!DOCTYPE html>
