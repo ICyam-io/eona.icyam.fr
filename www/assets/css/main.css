@@ -41,7 +41,7 @@ body {
     left: 0;
     right: 0;
     height: var(--nav-height);
-    background-color: var(--color-surface);
+    background-color: var(--color-accent);
     display: flex;
     justify-content: space-around;
     align-items: center;
@@ -49,7 +49,7 @@ body {
 }
 
 .bottom-nav a {
-    color: var(--color-text-muted);
+    color: var(--color-bg);
     text-decoration: none;
     display: flex;
     flex-direction: column;
@@ -64,7 +64,7 @@ body {
 
 .bottom-nav a.active,
 .bottom-nav a:hover {
-    color: var(--color-accent);
+    color: var(--color-surface);
 }
 
 /* Icônes Lucide dans la bottom nav */
