@@ -17,9 +17,10 @@ if (!empty($_SESSION['user_id'])) {
 $error   = '';
 $success = false;
 
-// Envoyer les données de la nouvelle inscription au webhook n8n
-// Send new registration data to the n8n webhook
-function notify_registration(int $user_id, string $prenom, string $nom, string $email, string $token): void
+// Envoyer les données complètes de la nouvelle inscription au webhook n8n
+// Send full registration data to the n8n webhook
+function notify_registration(int $user_id, string $prenom, string $nom, string $email, string $token,
+    string $date_naissance, string $sexe, int $taille_cm, float $poids_initial, ?float $poids_objectif): void
 {
     if (!WEBHOOK_REGISTRATION_URL) {
         return;
@@ -29,13 +30,18 @@ function notify_registration(int $user_id, string $prenom, string $nom, string $
     $refuse_url  = BASE_URL . '/approve.php?action=refuse&token='  . urlencode($token);
 
     $payload = json_encode([
-        'event'       => 'registration',
-        'user_id'     => $user_id,
-        'prenom'      => $prenom,
-        'nom'         => $nom,
-        'email'       => $email,
-        'approve_url' => $approve_url,
-        'refuse_url'  => $refuse_url,
+        'event'          => 'registration',
+        'user_id'        => $user_id,
+        'prenom'         => $prenom,
+        'nom'            => $nom,
+        'email'          => $email,
+        'date_naissance' => $date_naissance,
+        'sexe'           => $sexe,
+        'taille_cm'      => $taille_cm,
+        'poids_initial'  => $poids_initial,
+        'poids_objectif' => $poids_objectif,
+        'approve_url'    => $approve_url,
+        'refuse_url'     => $refuse_url,
     ]);
 
     $ch = curl_init(WEBHOOK_REGISTRATION_URL);
@@ -86,9 +92,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             ]);
             $user_id = (int)get_db()->lastInsertId();
 
-            // Notifier Alexandre via n8n — non bloquant
-            // Notify Alexandre via n8n — non-blocking
-            notify_registration($user_id, $prenom, $nom, $email, $token);
+            // Notifier Alexandre via n8n avec toutes les données — non bloquant
+            // Notify Alexandre via n8n with full data — non-blocking
+            notify_registration($user_id, $prenom, $nom, $email, $token,
+                $date_naissance, $sexe, $taille_cm, $poids_initial, $poids_objectif);
 
             $success = true;
         } catch (PDOException $e) {
@@ -122,7 +129,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <p style="font-weight: 600; margin-bottom: 0.5rem;">Demande envoyée !</p>
             <p style="color: var(--color-text-muted); font-size: 0.9rem;">
                 Ton compte est en attente de validation.<br>
-                Tu recevras un accès dès confirmation.
+                Tu recevras un email dès que ton accès sera confirmé.
             </p>
         </div>
     <?php else: ?>

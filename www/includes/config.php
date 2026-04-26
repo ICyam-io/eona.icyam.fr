@@ -22,3 +22,6 @@ define('WEBHOOK_SECRET', 'd42dbb0ca8639bfd08f17d9301e26b5ee29e9ddaa143d80554e923
 // URL du webhook n8n — à renseigner après création de WF-106
 // n8n webhook URL — to be filled after WF-106 creation
 define('WEBHOOK_REGISTRATION_URL', $_ENV['WEBHOOK_REGISTRATION_URL'] ?? 'https://mcp.icyam.fr/webhook/eona-inscription');
+// URL du webhook n8n — confirmation d'accès à l'utilisateur (WF-201)
+// n8n webhook URL — access confirmation to the user (WF-201)
+define('WEBHOOK_CONFIRMATION_URL', $_ENV['WEBHOOK_CONFIRMATION_URL'] ?? 'https://mcp.icyam.fr/webhook/eona-confirmation');

@@ -38,6 +38,31 @@ $nouveau_statut = $action === 'accept' ? 'active' : 'refused';
 $stmt = get_db()->prepare('UPDATE users SET statut = ?, validation_token = NULL WHERE id = ?');
 $stmt->execute([$nouveau_statut, $user['id']]);
 
+// Si accepté, notifier l'utilisateur par email via n8n
+// If accepted, notify the user by email via n8n
+if ($action === 'accept' && WEBHOOK_CONFIRMATION_URL) {
+    $payload = json_encode([
+        'event'  => 'confirmation',
+        'prenom' => $user['prenom'],
+        'nom'    => $user['nom'],
+        'email'  => $user['email'],
+    ]);
+    $ch = curl_init(WEBHOOK_CONFIRMATION_URL);
+    curl_setopt_array($ch, [
+        CURLOPT_POST           => true,
+        CURLOPT_POSTFIELDS     => $payload,
+        CURLOPT_HTTPHEADER     => [
+            'Content-Type: application/json',
+            'X-EonA-Secret: ' . WEBHOOK_SECRET,
+        ],
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_TIMEOUT        => 5,
+        CURLOPT_SSL_VERIFYPEER => true,
+    ]);
+    curl_exec($ch);
+    curl_close($ch);
+}
+
 $label   = $action === 'accept' ? 'Accès accordé ✅' : 'Accès refusé ❌';
 $couleur = $action === 'accept' ? '#6EA593' : '#E74C3C';
 ?>
