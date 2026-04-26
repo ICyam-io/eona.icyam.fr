@@ -69,13 +69,13 @@ $bmr = calculate_bmr(
         <!-- Taille — champ verrouillé par défaut, débloqué par la case à cocher -->
         <!-- Height — locked by default, unlocked via checkbox -->
         <div class="form-group">
-            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:0.4rem;">
-                <label style="margin:0;">Taille (cm)</label>
-                <label style="font-size:0.8rem; color:var(--color-text-muted); display:flex; align-items:center; gap:0.4rem; cursor:pointer;">
+            <label style="display:flex; align-items:center; gap:0.6rem; margin-bottom:0.4rem;">
+                Taille (cm)
+                <span style="font-size:0.8rem; color:var(--color-text-muted); display:flex; align-items:center; gap:0.3rem; cursor:pointer;">
                     <input type="checkbox" id="modifier_taille" name="modifier_taille" onchange="toggleTaille(this)">
                     Modifier
-                </label>
-            </div>
+                </span>
+            </label>
             <input type="number" name="taille_cm" id="champ_taille"
                    min="100" max="250"
                    value="<?= htmlspecialchars($user['taille_cm']) ?>"
