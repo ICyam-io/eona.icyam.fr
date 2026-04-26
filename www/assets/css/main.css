@@ -12,7 +12,7 @@
     --color-danger:      #E74C3C;
     --font-main:         'Lexend', sans-serif;
     --radius:            8px;
-    --nav-height:        64px;
+    --nav-height:        72px;
 }
 
 /* Reset minimal */
@@ -56,7 +56,8 @@ body {
     align-items: center;
     font-size: 0.7rem;
     gap: 4px;
-    padding: 8px 16px;
+    padding: 12px 20px;
+    min-width: 64px;
     border-radius: var(--radius);
     transition: color 0.2s;
 }
@@ -64,6 +65,13 @@ body {
 .bottom-nav a.active,
 .bottom-nav a:hover {
     color: var(--color-accent);
+}
+
+/* Icônes Lucide dans la bottom nav */
+/* Lucide icons inside bottom nav */
+.bottom-nav a svg {
+    width: 24px;
+    height: 24px;
 }
 
 /* Conteneur principal */

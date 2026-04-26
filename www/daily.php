@@ -236,12 +236,13 @@ $label_auj  = date_court($today);      // ex. "samedi 25 avril"
 </main>
 
 <nav class="bottom-nav">
-    <a href="/daily.php">📅<span>Journée</span></a>
-    <a href="/journal.php">📓<span>Journal</span></a>
-    <a href="/dashboard.php">📊<span>Tableau</span></a>
-    <a href="/profile.php">👤<span>Profil</span></a>
+    <a href="/daily.php"><i data-lucide="sun"></i><span>Journée</span></a>
+    <a href="/journal.php"><i data-lucide="book-open"></i><span>Journal</span></a>
+    <a href="/dashboard.php"><i data-lucide="bar-chart-2"></i><span>Tableau</span></a>
+    <a href="/profile.php"><i data-lucide="user"></i><span>Profil</span></a>
 </nav>
 
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
 <script src="/assets/js/main.js"></script>
 <script>
 // Basculer entre mode score direct et mode détaillé montre
